@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
+from splitterapp.models import User
 
 
 class RegisterSerializer(serializers.ModelSerializer):

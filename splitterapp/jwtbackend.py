@@ -8,7 +8,6 @@ from rest_framework import exceptions
 class JWTAuthentication(BaseAuthentication):
     def authenticate(self, request):
         auth_header = get_authorization_header(request)
-        super().authenticate(request)
 
         if not auth_header:
             return None
@@ -28,3 +27,5 @@ class JWTAuthentication(BaseAuthentication):
 
         except User.DoesNotExist as no_user:
             raise exceptions.AuthenticationFailed(f'No such user exist. {no_user}')    
+
+        return super().authenticate(request)

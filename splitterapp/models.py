@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 # Create your models here.
 # User, Profile
 # Friend Request
@@ -15,7 +16,7 @@ class TimeBase(models.Model):
         abstract = True
 
 
-class User(models.Model):
+class User(AbstractUser):
     friends = models.ManyToManyField("User", blank=True)
 
 
@@ -26,7 +27,7 @@ STATUS_CHOICES = (
 
 
 class FriendRequest(TimeBase):
-    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='request_sender')
     receiver = models.ForeignKey(User, on_delete=models.CASCADE)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='send')
 
@@ -35,7 +36,7 @@ class FriendRequest(TimeBase):
 
 
 class ExpenseGroup(TimeBase):
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_owner')
     name = models.CharField(max_length=100)
     description = models.TextField()
     group_users = models.ManyToManyField(User, blank=True)
@@ -51,8 +52,8 @@ class Expense(TimeBase):
     amount = models.IntegerField()
     participants = models.ManyToManyField(User, blank=True)
     split_equal = models.BooleanField(default=True)
-    split_amount = models.JSONField()
-    paid_by = models.ForeignKey(User, on_delete=models.SET_NULL)
+    # split_amount = models.JSONField()
+    paid_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='expense_paid_by')
 
     def __str__(self):
         return self.name
