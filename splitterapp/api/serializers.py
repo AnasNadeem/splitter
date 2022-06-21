@@ -1,5 +1,9 @@
 from rest_framework import serializers
-from splitterapp.models import User
+from splitterapp.models import (
+    User,
+    ExpenseGroup,
+    Expense,
+)
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -29,3 +33,10 @@ class LoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'password')
+
+
+class ExpenseGroupSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ExpenseGroup
+        fields = '__all__'

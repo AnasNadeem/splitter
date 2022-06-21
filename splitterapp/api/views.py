@@ -1,9 +1,17 @@
-from django.conf import settings
-from rest_framework.generics import GenericAPIView
-from .serializers import RegisterSerializer, LoginSerializer
-from rest_framework import status, response
-from django.contrib import auth
 import jwt
+from django.conf import settings
+from django.contrib import auth
+from rest_framework.generics import GenericAPIView
+from rest_framework.viewsets import ModelViewSet
+from rest_framework import status, response
+from rest_framework.permissions import IsAuthenticated
+from .serializers import RegisterSerializer, LoginSerializer, ExpenseGroupSerializer
+from splitterapp.models import (
+    User,
+    ExpenseGroup,
+    Expense,
+    FriendRequest
+)
 
 
 class RegisterAPiView(GenericAPIView):
@@ -34,3 +42,9 @@ class LoginApiView(GenericAPIView):
             data = {'username': user.username, 'token': auth_token}
             return response.Response(data, status=status.HTTP_200_OK)
         return response.Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+class ExpenseGroupView(ModelViewSet):
+    queryset = ExpenseGroup.objects.all()
+    serializer_class = ExpenseGroupSerializer
+    permission_classes = (IsAuthenticated,)

@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-yt)2+o&e$4gzbc1c-98017(l2=je#1$yu9p7@ru8szd_nx67f$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['itsmeanas.pythonanywhere.com', '*']
 
 AUTH_USER_MODEL = 'splitterapp.User'
 # Application definition
@@ -38,11 +38,22 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # 3rd Party Apps
+    'drf_yasg',
     'corsheaders',
     'rest_framework',
     # Our apps
     'splitterapp',
 ]
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        "Auth Token [Bearer Token]": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

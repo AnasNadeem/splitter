@@ -1,5 +1,5 @@
 import jwt
-from django.contrib.auth.models import User
+from splitterapp.models import User
 from rest_framework.authentication import BaseAuthentication, get_authorization_header
 from django.conf import settings
 from rest_framework import exceptions
@@ -12,7 +12,10 @@ class JWTAuthentication(BaseAuthentication):
         if not auth_header:
             return None
 
-        prefix, token = auth_header.decode('utf-8').split(' ')
+        if b' ' in auth_header:
+            prefix, token = auth_header.decode('utf-8').split(' ')
+        else:
+            token = auth_header.decode('utf-8')
 
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms='HS256')
@@ -26,6 +29,6 @@ class JWTAuthentication(BaseAuthentication):
             raise exceptions.AuthenticationFailed(f'Invalid Token. {ex}')
 
         except User.DoesNotExist as no_user:
-            raise exceptions.AuthenticationFailed(f'No such user exist. {no_user}')    
+            raise exceptions.AuthenticationFailed(f'No such user exist. {no_user}')
 
         return super().authenticate(request)
