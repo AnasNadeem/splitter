@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from splitterapp.models import (
+    FriendRequest,
     User,
     ExpenseGroup,
     Expense,
@@ -39,4 +40,11 @@ class ExpenseGroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ExpenseGroup
+        fields = '__all__'
+
+
+class FriendReqSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = FriendRequest
         fields = '__all__'
