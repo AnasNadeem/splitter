@@ -3,8 +3,15 @@ from splitterapp.models import (
     FriendRequest,
     User,
     ExpenseGroup,
-    Expense,
 )
+
+
+class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(max_length=50, min_length=4, write_only=True)
+
+    class Meta:
+        model = User
+        fields = '__all__'
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -27,15 +34,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 
-class LoginSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(max_length=50, min_length=4, write_only=True)
-    username = serializers.CharField(max_length=255)
-
-    class Meta:
-        model = User
-        fields = ('username', 'password')
-
-
 class ExpenseGroupSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -44,7 +42,9 @@ class ExpenseGroupSerializer(serializers.ModelSerializer):
 
 
 class FriendReqSerializer(serializers.ModelSerializer):
+    sender = UserSerializer()
+    receiver = UserSerializer()
 
     class Meta:
         model = FriendRequest
-        fields = '__all__'
+        fields = ('id', 'sender', 'receiver', 'status')

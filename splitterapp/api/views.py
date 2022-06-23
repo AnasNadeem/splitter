@@ -8,14 +8,13 @@ from rest_framework import status, response, views
 from rest_framework.permissions import IsAuthenticated
 from .serializers import (
     RegisterSerializer,
-    LoginSerializer,
+    UserSerializer,
     ExpenseGroupSerializer,
     FriendReqSerializer,
 )
 from splitterapp.models import (
     User,
     ExpenseGroup,
-    Expense,
     FriendRequest
 )
 
@@ -32,7 +31,7 @@ class RegisterAPiView(GenericAPIView):
 
 
 class LoginApiView(GenericAPIView):
-    serializer_class = LoginSerializer
+    serializer_class = UserSerializer
 
     def post(self, request):
         data = request.data
@@ -45,7 +44,8 @@ class LoginApiView(GenericAPIView):
                 settings.SECRET_KEY,
                 algorithm='HS256'
             )
-            data = {'username': user.username, 'token': auth_token}
+            user_serializer_data = self.serializer_class(user).data
+            data = {'user': user_serializer_data, 'token': auth_token}
             return response.Response(data, status=status.HTTP_200_OK)
         return response.Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -132,7 +132,7 @@ class FriendReqListView(ListAPIView):
 
     def get_queryset(self):
         qs = (FriendRequest.objects
-            .filter(Q(sender=self.request.user) | Q(receiver=self.request.user.id))
-            .filter(status='send')
-            )
+              .filter(Q(sender=self.request.user) | Q(receiver=self.request.user.id))
+              .filter(status='send')
+              )
         return qs
