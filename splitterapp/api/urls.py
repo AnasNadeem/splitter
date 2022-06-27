@@ -5,6 +5,7 @@ from .views import (
     ExpenseGroupView,
     SendFriendReqView,
     AcceptFriendReqView,
+    DeleteFriendReqView,
     FriendReqListView,
 )
 from rest_framework import routers
@@ -20,6 +21,7 @@ urlpatterns = [
     path('list-friend-request/', FriendReqListView.as_view()),
     path('send-request/', SendFriendReqView.as_view()),
     path('accept-request/', AcceptFriendReqView.as_view()),
+    path('delete-request/', DeleteFriendReqView.as_view()),
 ]
 
 urlpatterns += router.urls

@@ -12,6 +12,16 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
+        depth = 2
+
+
+class LoginSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(max_length=50, min_length=4, write_only=True)
+    username = serializers.CharField(max_length=255)
+
+    class Meta:
+        model = User
+        fields = ('username', 'password')
 
 
 class RegisterSerializer(serializers.ModelSerializer):

@@ -1,0 +1,2 @@
+Implement signals instead of saving other models field data.
+Add validate

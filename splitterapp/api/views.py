@@ -7,6 +7,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework import status, response, views
 from rest_framework.permissions import IsAuthenticated
 from .serializers import (
+    LoginSerializer,
     RegisterSerializer,
     UserSerializer,
     ExpenseGroupSerializer,
@@ -31,7 +32,7 @@ class RegisterAPiView(GenericAPIView):
 
 
 class LoginApiView(GenericAPIView):
-    serializer_class = UserSerializer
+    serializer_class = LoginSerializer
 
     def post(self, request):
         data = request.data
@@ -44,7 +45,7 @@ class LoginApiView(GenericAPIView):
                 settings.SECRET_KEY,
                 algorithm='HS256'
             )
-            user_serializer_data = self.serializer_class(user).data
+            user_serializer_data = UserSerializer(user).data
             data = {'user': user_serializer_data, 'token': auth_token}
             return response.Response(data, status=status.HTTP_200_OK)
         return response.Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -77,11 +78,15 @@ class SendFriendReqView(views.APIView):
 
         # Check if Friend Request already exist
         fr_req = (FriendRequest.objects
-                  .filter(sender=request.user, receiver=receiver_qs, status='send')
+                  .filter((Q(sender=request.user) & Q(receiver=receiver_qs)) | (Q(sender=receiver_qs) & Q(receiver=request.user)))
                   .first()
                   )
         if fr_req:
-            return response.Response({"status": "Request already exists!"}, status=status.HTTP_400_BAD_REQUEST)
+            response_error = {
+                "error": "Request already exists.",
+                "status": f"{fr_req.status}"
+            }
+            return response.Response(response_error, status=status.HTTP_400_BAD_REQUEST)
 
         fr_req = FriendRequest()
         fr_req.sender = request.user
@@ -125,6 +130,31 @@ class AcceptFriendReqView(views.APIView):
         return response.Response({"status": "Friend request accepted"}, status=status.HTTP_201_CREATED)
 
 
+class DeleteFriendReqView(views.APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        data = request.data
+        fr_req_id = data.get('fr_req_id')
+        if not fr_req_id:
+            return response.Response({"status": "Need a parameter 'fr_req_id'"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if Friend Request already exist
+        fr_req_qs = (FriendRequest.objects
+                     .filter(id=fr_req_id)
+                     .filter(Q(sender=request.user) | Q(receiver=request.user))
+                     .first()
+                     )
+
+        if not fr_req_qs:
+            return response.Response({"status": "Friend Request doesn't exists!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Delete the Friend Request
+        fr_req_qs.delete()
+
+        return response.Response({"status": "Friend request deleted"}, status=status.HTTP_201_CREATED)
+
+
 class FriendReqListView(ListAPIView):
     queryset = FriendRequest.objects.all()
     serializer_class = FriendReqSerializer
@@ -133,6 +163,5 @@ class FriendReqListView(ListAPIView):
     def get_queryset(self):
         qs = (FriendRequest.objects
               .filter(Q(sender=self.request.user) | Q(receiver=self.request.user.id))
-              .filter(status='send')
               )
         return qs
