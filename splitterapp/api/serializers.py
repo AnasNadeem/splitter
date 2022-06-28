@@ -1,12 +1,31 @@
 from rest_framework import serializers
 from splitterapp.models import (
-    FriendRequest,
-    User,
+    Expense,
     ExpenseGroup,
+    FriendRequest,
+    PendingPayment,
+    User,
 )
 
 
 class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(max_length=50, min_length=4, write_only=True)
+
+    class Meta:
+        model = User
+        fields = '__all__'
+
+
+class UserSerializerWithDepth1(serializers.ModelSerializer):
+    password = serializers.CharField(max_length=50, min_length=4, write_only=True)
+
+    class Meta:
+        model = User
+        fields = '__all__'
+        depth = 1
+
+
+class UserSerializerWithDepth2(serializers.ModelSerializer):
     password = serializers.CharField(max_length=50, min_length=4, write_only=True)
 
     class Meta:
@@ -51,10 +70,41 @@ class ExpenseGroupSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ExpenseGroupSerializerForGet(serializers.ModelSerializer):
+    class Meta:
+        model = ExpenseGroup
+        fields = '__all__'
+        depth = 1
+
+
 class FriendReqSerializer(serializers.ModelSerializer):
-    sender = UserSerializer()
-    receiver = UserSerializer()
+    sender = UserSerializerWithDepth2()
+    receiver = UserSerializerWithDepth2()
 
     class Meta:
         model = FriendRequest
-        fields = ('id', 'sender', 'receiver', 'status')
+        fields = '__all__'
+
+
+class ExpenseSerializerForGet(serializers.ModelSerializer):
+
+    class Meta:
+        model = Expense
+        fields = '__all__'
+        depth = 1
+
+
+class ExpenseSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Expense
+        fields = '__all__'
+
+
+class PendingPaymentSerializer(serializers.ModelSerializer):
+    expense = ExpenseSerializerForGet()
+    user = UserSerializer()
+
+    class Meta:
+        model = PendingPayment
+        fields = '__all__'

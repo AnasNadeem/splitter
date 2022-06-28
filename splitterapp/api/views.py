@@ -9,14 +9,20 @@ from rest_framework.permissions import IsAuthenticated
 from .serializers import (
     LoginSerializer,
     RegisterSerializer,
-    UserSerializer,
+    UserSerializerWithDepth2,
     ExpenseGroupSerializer,
+    ExpenseGroupSerializerForGet,
     FriendReqSerializer,
+    PendingPaymentSerializer,
+    ExpenseSerializer,
+    ExpenseSerializerForGet,
 )
 from splitterapp.models import (
-    User,
+    Expense,
     ExpenseGroup,
-    FriendRequest
+    FriendRequest,
+    PendingPayment,
+    User,
 )
 
 
@@ -45,16 +51,21 @@ class LoginApiView(GenericAPIView):
                 settings.SECRET_KEY,
                 algorithm='HS256'
             )
-            user_serializer_data = UserSerializer(user).data
+            user_serializer_data = UserSerializerWithDepth2(user).data
             data = {'user': user_serializer_data, 'token': auth_token}
             return response.Response(data, status=status.HTTP_200_OK)
         return response.Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
-class ExpenseGroupView(ModelViewSet):
+class ExpenseGroupViewset(ModelViewSet):
     queryset = ExpenseGroup.objects.all()
     serializer_class = ExpenseGroupSerializer
     permission_classes = (IsAuthenticated,)
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return ExpenseGroupSerializerForGet
+        return self.serializer_class
 
     def get_queryset(self):
         qs = ExpenseGroup.objects.filter(Q(owner=self.request.user) | Q(group_users__id=self.request.user.id))
@@ -165,3 +176,54 @@ class FriendReqListView(ListAPIView):
               .filter(Q(sender=self.request.user) | Q(receiver=self.request.user.id))
               )
         return qs
+
+
+class ExpenseViewset(ModelViewSet):
+    queryset = Expense.objects.all()
+    serializer_class = ExpenseSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return ExpenseSerializerForGet
+        return self.serializer_class
+
+    def get_queryset(self):
+        qs = Expense.objects.filter(Q(paid_by=self.request.user) | Q(participants__id=self.request.user.id))
+        return qs
+
+    def create(self, request, *args, **kwargs):
+        # split_amounts = [{'user_id': user_id, 'amount': amount}]
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        expense_id = serializer.data.get('id')
+        expense_amount = serializer.data.get('amount')
+        participants = serializer.data.get('participants')
+
+        if participants:
+            for participant in participants:
+                pending_payment = PendingPayment()
+                pending_payment.expense_id = expense_id
+                pending_payment.user_id = participant
+                pending_payment.amount = expense_amount / len(participants)
+                pending_payment.save()
+
+        headers = self.get_success_headers(serializer.data)
+        return response.Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class PendingPaymentListView(ListAPIView):
+    queryset = PendingPayment.objects.all()
+    serializer_class = PendingPaymentSerializer
+    permission_classes = (IsAuthenticated,)
+    filterset_fields = ('expense__id', 'user', 'is_paid')
+
+    # def get_queryset(self):
+    #     expense_id = self.request.query_params.get('expense_id')
+    #     expense_qs = Expense.objects.filter(pk=expense_id).first()
+    #     qs = (PendingPayment.objects
+    #           .filter(expense=expense_qs)
+    #           )
+    #     return qs

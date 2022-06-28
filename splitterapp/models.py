@@ -48,7 +48,7 @@ class ExpenseGroup(TimeBase):
 class Expense(TimeBase):
     group = models.ForeignKey(ExpenseGroup, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
-    description = models.TextField()
+    description = models.TextField(blank=True)
     amount = models.IntegerField()
     participants = models.ManyToManyField(User, blank=True)
     split_equal = models.BooleanField(default=True)
@@ -59,11 +59,14 @@ class Expense(TimeBase):
         return self.name
 
 
-# class PendingPayment(TimeBase):
-#     expense = models.ForeignKey(Expense, on_delete=models.CASCADE)
-#     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-#     amount = models.IntegerField()
-#     is_paid = models.BooleanField(default=False)
+class PendingPayment(TimeBase):
+    expense = models.ForeignKey(Expense, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    amount = models.IntegerField()
+    is_paid = models.BooleanField(default=False)
 
-#     def __str__(self):
-#         return f"Pay {self.expense.paid_by.username}"
+    def __str__(self):
+        if self.is_paid:
+            return f"{self.user.username} paid {self.amount} to {self.expense.paid_by.username}."
+        else:
+            return f"{self.user.username} owes {self.amount} to {self.expense.paid_by.username}."
