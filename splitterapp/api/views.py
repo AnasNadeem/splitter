@@ -68,7 +68,10 @@ class ExpenseGroupViewset(ModelViewSet):
         return self.serializer_class
 
     def get_queryset(self):
-        qs = ExpenseGroup.objects.filter(Q(owner=self.request.user) | Q(group_users__id=self.request.user.id))
+        qs = (ExpenseGroup.objects
+                .filter(Q(owner=self.request.user) | Q(group_users__id=self.request.user.id))
+                .distinct()
+                )
         return qs
 
 
@@ -174,6 +177,7 @@ class FriendReqListView(ListAPIView):
     def get_queryset(self):
         qs = (FriendRequest.objects
               .filter(Q(sender=self.request.user) | Q(receiver=self.request.user.id))
+              .distinct()
               )
         return qs
 
@@ -189,7 +193,10 @@ class ExpenseViewset(ModelViewSet):
         return self.serializer_class
 
     def get_queryset(self):
-        qs = Expense.objects.filter(Q(paid_by=self.request.user) | Q(participants__id=self.request.user.id))
+        qs = (Expense.objects
+              .filter(Q(paid_by=self.request.user) | Q(participants__id=self.request.user.id))
+              .distinct()
+              )
         return qs
 
     def create(self, request, *args, **kwargs):

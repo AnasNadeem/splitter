@@ -6,6 +6,7 @@ from splitterapp.models import (
     PendingPayment,
     User,
 )
+from django.db.models import Q
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -27,11 +28,20 @@ class UserSerializerWithDepth1(serializers.ModelSerializer):
 
 class UserSerializerWithDepth2(serializers.ModelSerializer):
     password = serializers.CharField(max_length=50, min_length=4, write_only=True)
+    expense_group = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = '__all__'
         depth = 2
+
+    def get_expense_group(self, obj):
+        expense_group_qs = (ExpenseGroup.objects
+                            .filter(Q(owner_id=obj.id) | Q(group_users__id=obj.id))
+                            .distinct()
+                            )
+        expense_group_qs_data = ExpenseGroupSerializerForGet(expense_group_qs, many=True).data
+        return expense_group_qs_data
 
 
 class LoginSerializer(serializers.ModelSerializer):
@@ -71,10 +81,16 @@ class ExpenseGroupSerializer(serializers.ModelSerializer):
 
 
 class ExpenseGroupSerializerForGet(serializers.ModelSerializer):
+    expense = serializers.SerializerMethodField()
     class Meta:
         model = ExpenseGroup
         fields = '__all__'
         depth = 1
+
+    def get_expense(self, obj):
+        expense_qs = Expense.objects.filter(group_id=obj.id)
+        expense_qs_data = ExpenseSerializerForGet(expense_qs, many=True).data
+        return expense_qs_data
 
 
 class FriendReqSerializer(serializers.ModelSerializer):
