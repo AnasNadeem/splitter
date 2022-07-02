@@ -40,6 +40,7 @@ class ExpenseGroup(TimeBase):
     name = models.CharField(max_length=100)
     description = models.TextField()
     group_users = models.ManyToManyField(User, blank=True)
+    is_settled = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -54,6 +55,7 @@ class Expense(TimeBase):
     split_equal = models.BooleanField(default=True)
     # split_amount = models.JSONField()
     paid_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='expense_paid_by')
+    is_settled = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name

@@ -2,6 +2,7 @@ from django.urls import path
 from .views import (
     RegisterAPiView,
     LoginApiView,
+    LoginApiByTokenView,
     ExpenseGroupViewset,
     ExpenseViewset,
     SendFriendReqView,
@@ -22,6 +23,7 @@ urlpatterns = [
     # Authentication Urls
     path('register/', RegisterAPiView.as_view()),
     path('login/', LoginApiView.as_view()),
+    path('login-by-token/', LoginApiByTokenView.as_view()),
     # Friend Request Urls
     path('list-friend-request/', FriendReqListView.as_view()),
     path('send-request/', SendFriendReqView.as_view()),

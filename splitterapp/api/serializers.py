@@ -82,6 +82,7 @@ class ExpenseGroupSerializer(serializers.ModelSerializer):
 
 class ExpenseGroupSerializerForGet(serializers.ModelSerializer):
     expense = serializers.SerializerMethodField()
+
     class Meta:
         model = ExpenseGroup
         fields = '__all__'

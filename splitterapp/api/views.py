@@ -57,6 +57,22 @@ class LoginApiView(GenericAPIView):
         return response.Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
+class LoginApiByTokenView(views.APIView):
+
+    def post(self, request):
+        data = request.data
+        token = data.get('token')
+        if not token:
+            return response.Response({"status": "Need 'token'"}, status=status.HTTP_400_BAD_REQUEST)
+
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms='HS256')
+        user = User.objects.filter(username=payload['username']).first()
+        if user:
+            user_serializer_data = UserSerializerWithDepth2(user).data
+            return response.Response(user_serializer_data, status=status.HTTP_200_OK)
+        return response.Response({'error': 'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
 class ExpenseGroupViewset(ModelViewSet):
     queryset = ExpenseGroup.objects.all()
     serializer_class = ExpenseGroupSerializer
@@ -69,9 +85,9 @@ class ExpenseGroupViewset(ModelViewSet):
 
     def get_queryset(self):
         qs = (ExpenseGroup.objects
-                .filter(Q(owner=self.request.user) | Q(group_users__id=self.request.user.id))
-                .distinct()
-                )
+              .filter(Q(owner=self.request.user) | Q(group_users__id=self.request.user.id))
+              .distinct()
+              )
         return qs
 
 
